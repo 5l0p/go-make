@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 
 	"go-make/pkg/builder"
 	"go-make/pkg/makefile"
