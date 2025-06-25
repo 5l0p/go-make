@@ -19,6 +19,8 @@ go-make/
 ├── cmd/go-make/          # Main application entry point
 │   └── main.go
 ├── pkg/                  # Public packages (importable by other projects)
+│   ├── cmd/              # High-level convenience API
+│   │   └── gomake.go
 │   ├── types/            # Core data structures
 │   │   ├── makefile.go
 │   │   └── makefile_test.go
@@ -76,7 +78,80 @@ go-make test
 
 ### Library Usage
 
-You can also use go-make as a library in your Go programs:
+You can use go-make as a library in your Go programs. There are two approaches:
+
+#### High-Level API (Recommended)
+
+The easiest way is to use the `pkg/cmd` package:
+
+```go
+package main
+
+import (
+    "log"
+    
+    "go-make/pkg/cmd"
+)
+
+func main() {
+    // Simple one-liner to build a target
+    err := cmd.Build("Makefile", "all")
+    if err != nil {
+        log.Fatal(err)
+    }
+    
+    // Or build the default target
+    err = cmd.BuildDefault("Makefile")
+    if err != nil {
+        log.Fatal(err)
+    }
+}
+```
+
+#### Advanced Usage with High-Level API
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    
+    "go-make/pkg/cmd"
+)
+
+func main() {
+    // Create a Make instance for multiple operations
+    make, err := cmd.New("Makefile")
+    if err != nil {
+        log.Fatal(err)
+    }
+    
+    // List available targets
+    fmt.Println("Available targets:", make.Targets())
+    
+    // Build multiple targets
+    err = make.BuildMultiple("clean", "build", "test")
+    if err != nil {
+        log.Fatal(err)
+    }
+    
+    // Build only if target exists
+    err = make.BuildIfExists("optional-target")
+    if err != nil {
+        log.Fatal(err)
+    }
+    
+    // Check build status
+    if make.IsBuilt("test") {
+        fmt.Println("Tests completed successfully")
+    }
+}
+```
+
+#### Low-Level API
+
+For fine-grained control, use the individual packages:
 
 ```go
 package main
@@ -113,6 +188,7 @@ func main() {
 
 #### Available Packages
 
+- **`pkg/cmd`**: High-level convenience API (recommended for most users)
 - **`pkg/types`**: Core data structures (Makefile, Rule)
 - **`pkg/makefile`**: Makefile parsing functionality
 - **`pkg/builder`**: Build execution and dependency resolution
@@ -259,6 +335,7 @@ See [examples/README.md](examples/README.md) for detailed information about each
 The application is structured using standard Go project layout:
 
 - **`cmd/go-make`**: Main application with CLI interface
+- **`pkg/cmd`**: High-level convenience API for easy integration
 - **`pkg/makefile`**: Public Makefile parsing API
 - **`pkg/builder`**: Public build execution and dependency resolution API
 - **`pkg/types`**: Public types and data structures
