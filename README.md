@@ -18,17 +18,16 @@ A basic implementation of GNU Make written in Go. This project provides a simpli
 go-make/
 ├── cmd/go-make/          # Main application entry point
 │   └── main.go
-├── internal/             # Private application packages
-│   ├── builder/          # Build execution logic
-│   │   ├── builder.go
-│   │   └── builder_test.go
-│   ├── makefile/         # Makefile parsing logic
+├── pkg/                  # Public packages (importable by other projects)
+│   ├── types/            # Core data structures
+│   │   ├── makefile.go
+│   │   └── makefile_test.go
+│   ├── makefile/         # Makefile parsing functionality
 │   │   ├── parser.go
 │   │   └── parser_test.go
-│   └── testutil/         # Test utilities
-│       └── helpers.go
-├── pkg/types/            # Public types and interfaces
-│   └── makefile.go
+│   └── builder/          # Build execution and dependency resolution
+│       ├── builder.go
+│       └── builder_test.go
 ├── examples/             # Example Makefiles and projects
 │   ├── simple/           # Basic C program example
 │   ├── complex/          # Multi-file C project example
@@ -60,7 +59,7 @@ go install ./cmd/go-make
 
 ## Usage
 
-### Basic Usage
+### Command Line Usage
 
 ```bash
 # Build the default target (first target in Makefile)
@@ -73,6 +72,98 @@ go-make target-name
 go-make all
 go-make clean
 go-make test
+```
+
+### Library Usage
+
+You can also use go-make as a library in your Go programs:
+
+```go
+package main
+
+import (
+    "log"
+    
+    "go-make/pkg/makefile"
+    "go-make/pkg/builder"
+)
+
+func main() {
+    // Parse a Makefile
+    mf, err := makefile.ParseMakefile("Makefile")
+    if err != nil {
+        log.Fatal(err)
+    }
+    
+    // Create a builder
+    b := builder.NewBuilder(mf)
+    
+    // Build a specific target
+    err = b.Build("all")
+    if err != nil {
+        log.Fatal(err)
+    }
+    
+    // Check if a target was built
+    if b.IsBuilt("all") {
+        log.Println("Target 'all' was successfully built")
+    }
+}
+```
+
+#### Available Packages
+
+- **`pkg/types`**: Core data structures (Makefile, Rule)
+- **`pkg/makefile`**: Makefile parsing functionality
+- **`pkg/builder`**: Build execution and dependency resolution
+
+#### Example: Custom Build Logic
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    
+    "go-make/pkg/makefile"
+    "go-make/pkg/builder"
+)
+
+func main() {
+    // Parse Makefile
+    mf, err := makefile.ParseMakefile("Makefile")
+    if err != nil {
+        log.Fatal(err)
+    }
+    
+    // List all available targets
+    fmt.Println("Available targets:")
+    for _, target := range mf.Targets() {
+        rule := mf.GetTarget(target)
+        fmt.Printf("  %s (deps: %v)\n", target, rule.Dependencies)
+    }
+    
+    // Build with custom logic
+    b := builder.NewBuilder(mf)
+    
+    // Build multiple targets
+    targets := []string{"clean", "build", "test"}
+    for _, target := range targets {
+        if mf.HasTarget(target) {
+            fmt.Printf("Building target: %s\n", target)
+            if err := b.Build(target); err != nil {
+                log.Printf("Failed to build %s: %v", target, err)
+                continue
+            }
+        } else {
+            fmt.Printf("Target %s not found, skipping\n", target)
+        }
+    }
+    
+    // Reset builder state if needed
+    b.Reset()
+}
 ```
 
 ### Example Makefile
@@ -168,15 +259,15 @@ See [examples/README.md](examples/README.md) for detailed information about each
 The application is structured using standard Go project layout:
 
 - **`cmd/go-make`**: Main application with CLI interface
-- **`internal/makefile`**: Makefile parsing logic
-- **`internal/builder`**: Build execution and dependency resolution
-- **`pkg/types`**: Public types shared across packages
-- **`internal/testutil`**: Test utilities and helpers
+- **`pkg/makefile`**: Public Makefile parsing API
+- **`pkg/builder`**: Public build execution and dependency resolution API
+- **`pkg/types`**: Public types and data structures
+- **`examples/`**: Example projects demonstrating usage
 
 ### Key Components
 
-1. **Parser** (`internal/makefile`): Parses Makefile syntax into structured data
-2. **Builder** (`internal/builder`): Executes build process with dependency resolution
+1. **Parser** (`pkg/makefile`): Parses Makefile syntax into structured data
+2. **Builder** (`pkg/builder`): Executes build process with dependency resolution
 3. **Types** (`pkg/types`): Defines core data structures (Rule, Makefile)
 
 ## Contributing

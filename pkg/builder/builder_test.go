@@ -38,11 +38,11 @@ func TestBuilderBuild(t *testing.T) {
 		t.Errorf("Build failed: %v", err)
 	}
 
-	if !builder.built["all"] {
+	if !builder.IsBuilt("all") {
 		t.Error("Target 'all' should be marked as built")
 	}
 
-	if !builder.built["hello.o"] {
+	if !builder.IsBuilt("hello.o") {
 		t.Error("Target 'hello.o' should be marked as built")
 	}
 }
@@ -146,5 +146,32 @@ func TestBuilderCircularDependency(t *testing.T) {
 	expectedError := "circular dependency detected"
 	if !strings.Contains(err.Error(), expectedError) {
 		t.Errorf("Expected error to contain '%s', got: %v", expectedError, err)
+	}
+}
+
+func TestBuilderReset(t *testing.T) {
+	makefile := &types.Makefile{
+		Rules: map[string]*types.Rule{
+			"test": {
+				Target:   "test",
+				Commands: []string{"echo 'test'"},
+			},
+		},
+	}
+
+	builder := NewBuilder(makefile)
+	err := builder.Build("test")
+	if err != nil {
+		t.Errorf("Build failed: %v", err)
+	}
+
+	if !builder.IsBuilt("test") {
+		t.Error("Target should be marked as built")
+	}
+
+	builder.Reset()
+
+	if builder.IsBuilt("test") {
+		t.Error("Target should not be marked as built after reset")
 	}
 }
