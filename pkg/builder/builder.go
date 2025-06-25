@@ -6,7 +6,7 @@ import (
 	"os"
 	"os/exec"
 
-	"go-make/pkg/types"
+	"github.com/5l0p/go-make/pkg/types"
 )
 
 // Builder handles the build process for Makefile targets.

@@ -6,9 +6,9 @@ package cmd
 import (
 	"fmt"
 
-	"go-make/pkg/builder"
-	"go-make/pkg/makefile"
-	"go-make/pkg/types"
+	"github.com/5l0p/go-make/pkg/builder"
+	"github.com/5l0p/go-make/pkg/makefile"
+	"github.com/5l0p/go-make/pkg/types"
 )
 
 // Make represents a high-level interface to go-make functionality.

@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"go-make/pkg/types"
+	"github.com/5l0p/go-make/pkg/types"
 )
 
 func TestBuilderBuild(t *testing.T) {

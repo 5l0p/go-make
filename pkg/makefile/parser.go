@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"go-make/pkg/types"
+	"github.com/5l0p/go-make/pkg/types"
 )
 
 // ParseMakefile parses a Makefile from the given filename and returns a Makefile struct.

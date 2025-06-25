@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"go-make/pkg/types"
+	"github.com/5l0p/go-make/pkg/types"
 )
 
 func TestParseMakefile(t *testing.T) {

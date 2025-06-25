@@ -56,7 +56,7 @@ The binary will be built in `./bin/go-make`.
 ### Using Go Install
 
 ```bash
-go install ./cmd/go-make
+go install github.com/5l0p/go-make/cmd/go-make@latest
 ```
 
 ## Usage
@@ -90,7 +90,7 @@ package main
 import (
     "log"
     
-    "go-make/pkg/cmd"
+    "github.com/5l0p/go-make/pkg/cmd"
 )
 
 func main() {
@@ -117,7 +117,7 @@ import (
     "fmt"
     "log"
     
-    "go-make/pkg/cmd"
+    "github.com/5l0p/go-make/pkg/cmd"
 )
 
 func main() {
@@ -159,8 +159,8 @@ package main
 import (
     "log"
     
-    "go-make/pkg/makefile"
-    "go-make/pkg/builder"
+    "github.com/5l0p/go-make/pkg/makefile"
+    "github.com/5l0p/go-make/pkg/builder"
 )
 
 func main() {
@@ -202,8 +202,8 @@ import (
     "fmt"
     "log"
     
-    "go-make/pkg/makefile"
-    "go-make/pkg/builder"
+    "github.com/5l0p/go-make/pkg/makefile"
+    "github.com/5l0p/go-make/pkg/builder"
 )
 
 func main() {
