@@ -52,29 +52,63 @@ func ParseMakefileFromReader(reader *os.File) (*types.Makefile, error) {
 		if strings.HasPrefix(line, "\t") {
 			if currentRule != nil {
 				command := strings.TrimPrefix(line, "\t")
-				currentRule.Commands = append(currentRule.Commands, command)
+				// Expand variables in commands
+				expandedCommand := makefile.ExpandVariables(command)
+				currentRule.Commands = append(currentRule.Commands, expandedCommand)
 			}
+		} else if name, value, isAssignment := parseVariableAssignment(line); isAssignment {
+			// Variable assignment: VAR = value
+			// Expand variables in the value
+			expandedValue := makefile.ExpandVariables(value)
+			makefile.SetVariable(name, expandedValue)
 		} else if strings.Contains(line, ":") {
 			// Target definition: target: dependency1 dependency2
 			parts := strings.SplitN(line, ":", 2)
 			target := strings.TrimSpace(parts[0])
 			deps := strings.Fields(strings.TrimSpace(parts[1]))
 			
+			// Expand variables in target name and dependencies
+			expandedTarget := makefile.ExpandVariables(target)
+			expandedDeps := make([]string, len(deps))
+			for i, dep := range deps {
+				expandedDeps[i] = makefile.ExpandVariables(dep)
+			}
+			
 			rule := &types.Rule{
-				Target:       target,
-				Dependencies: deps,
+				Target:       expandedTarget,
+				Dependencies: expandedDeps,
 				Commands:     []string{},
 			}
 			
 			// Set the first rule as the default target
 			if makefile.FirstRule == "" {
-				makefile.FirstRule = target
+				makefile.FirstRule = expandedTarget
 			}
 			
-			makefile.Rules[target] = rule
+			makefile.Rules[expandedTarget] = rule
 			currentRule = rule
 		}
 	}
 
 	return makefile, scanner.Err()
+}
+
+// parseVariableAssignment parses a variable assignment line like "VAR = value"
+// Returns the variable name, value, and whether it was a valid assignment.
+func parseVariableAssignment(line string) (name, value string, isAssignment bool) {
+	// Look for = sign (supporting spaces around it)
+	parts := strings.SplitN(line, "=", 2)
+	if len(parts) != 2 {
+		return "", "", false
+	}
+
+	name = strings.TrimSpace(parts[0])
+	value = strings.TrimSpace(parts[1])
+
+	// Variable names should be valid identifiers (letters, digits, underscore)
+	if name == "" || strings.ContainsAny(name, " \t:") {
+		return "", "", false
+	}
+
+	return name, value, true
 }

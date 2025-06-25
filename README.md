@@ -257,6 +257,64 @@ clean:
 .PHONY: clean
 ```
 
+### Example with Variables
+
+```makefile
+# Makefile with variable substitution
+CC = gcc
+CFLAGS = -Wall -O2
+TARGET = hello
+SRCDIR = src
+OBJDIR = build
+
+all: $(TARGET)
+
+$(TARGET): $(OBJDIR)/main.o
+	$(CC) $(CFLAGS) -o $(TARGET) $(OBJDIR)/main.o
+	echo "Built $(TARGET) with $(CC)"
+
+$(OBJDIR)/main.o: $(SRCDIR)/main.c
+	mkdir -p $(OBJDIR)
+	$(CC) $(CFLAGS) -c $(SRCDIR)/main.c -o $(OBJDIR)/main.o
+
+clean:
+	rm -rf $(OBJDIR) $(TARGET)
+	echo "Cleaned $(TARGET) and $(OBJDIR)"
+
+.PHONY: clean all
+```
+
+### Example with Automatic Variables
+
+```makefile
+# Makefile with automatic variables
+CC = gcc
+CFLAGS = -Wall -O2
+
+hello: main.o utils.o
+	$(CC) $(CFLAGS) -o $@ $^
+	echo "Built $@ from $^"
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+	echo "Compiled $< to $@"
+
+test: hello
+	echo "Testing $< (target: $@)"
+	./$<
+
+clean:
+	rm -f *.o hello
+
+.PHONY: clean test
+```
+
+**Automatic Variables Explained:**
+- `$@` - The target name (e.g., `hello`, `main.o`)
+- `$<` - The first prerequisite (e.g., `main.c`)
+- `$^` - All prerequisites (e.g., `main.o utils.o`)
+- `$?` - Prerequisites newer than the target
+
 ## Development
 
 ### Building
@@ -320,15 +378,17 @@ See [examples/README.md](examples/README.md) for detailed information about each
 - PHONY targets
 - Default target selection
 - Circular dependency detection
+- **Variable substitution (`$(VAR)` and `${VAR}`)**
+- **Environment variable inheritance**
+- **Variable assignment (`VAR = value`)**
+- **Automatic variables (`$@`, `$<`, `$^`, `$?`)**
 
 ### Not Yet Implemented
 
-- Variable substitution (`$(VAR)` or `${VAR}`)
 - Pattern rules (`%.o: %.c`)
 - Built-in functions
 - Conditional statements (`ifeq`, `ifdef`, etc.)
 - Include directives
-- Automatic variables (`$@`, `$<`, `$^`, etc.)
 
 ## Architecture
 

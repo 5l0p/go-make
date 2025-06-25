@@ -26,8 +26,9 @@ type Rule struct {
 }
 
 // Makefile represents a parsed Makefile with all its rules.
-// It contains a map of all rules indexed by target name, and tracks
-// the first rule encountered (used as the default target).
+// It contains a map of all rules indexed by target name, tracks
+// the first rule encountered (used as the default target), and
+// stores variable definitions.
 type Makefile struct {
 	// Rules maps target names to their corresponding Rule definitions
 	Rules map[string]*Rule
@@ -35,12 +36,16 @@ type Makefile struct {
 	// FirstRule is the name of the first target encountered in the Makefile.
 	// This is used as the default target when none is specified.
 	FirstRule string
+	
+	// Variables stores variable definitions from the Makefile (VAR = value)
+	Variables map[string]string
 }
 
 // NewMakefile creates a new empty Makefile with initialized maps.
 func NewMakefile() *Makefile {
 	return &Makefile{
-		Rules: make(map[string]*Rule),
+		Rules:     make(map[string]*Rule),
+		Variables: make(map[string]string),
 	}
 }
 
@@ -62,4 +67,32 @@ func (m *Makefile) Targets() []string {
 		targets = append(targets, target)
 	}
 	return targets
+}
+
+// SetVariable sets a variable in the Makefile.
+func (m *Makefile) SetVariable(name, value string) {
+	m.Variables[name] = value
+}
+
+// GetVariable returns the value of a variable, or empty string if not found.
+func (m *Makefile) GetVariable(name string) string {
+	return m.Variables[name]
+}
+
+// HasVariable returns true if the variable is defined.
+func (m *Makefile) HasVariable(name string) bool {
+	_, exists := m.Variables[name]
+	return exists
+}
+
+// ExpandVariables expands all variable references in the given string.
+// Supports both $(VAR) and ${VAR} syntax.
+func (m *Makefile) ExpandVariables(text string) string {
+	return expandVariables(text, m.Variables)
+}
+
+// ExpandVariablesWithContext expands variables including automatic variables.
+// Used during command execution when we know the target context.
+func (m *Makefile) ExpandVariablesWithContext(text string, autoVars *AutomaticVariables) string {
+	return expandVariablesWithContext(text, m.Variables, autoVars)
 }

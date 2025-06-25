@@ -82,8 +82,12 @@ func (b *Builder) Build(target string) error {
 	// Check if target needs rebuilding
 	if b.needsRebuild(target, rule.Dependencies) {
 		fmt.Printf("Building target: %s\n", target)
+		
+		// Create automatic variables context
+		autoVars := b.createAutomaticVariables(target, rule.Dependencies)
+		
 		for _, command := range rule.Commands {
-			if err := b.executeCommand(command); err != nil {
+			if err := b.executeCommandWithContext(command, autoVars); err != nil {
 				return fmt.Errorf("command failed: %s", err)
 			}
 		}
@@ -147,4 +151,58 @@ func (b *Builder) executeCommand(command string) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
+}
+
+// executeCommandWithContext executes a shell command with automatic variable expansion.
+func (b *Builder) executeCommandWithContext(command string, autoVars *types.AutomaticVariables) error {
+	// Expand automatic variables in the command
+	expandedCommand := b.makefile.ExpandVariablesWithContext(command, autoVars)
+	fmt.Printf("\t%s\n", expandedCommand)
+	cmd := exec.Command("sh", "-c", expandedCommand)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
+// createAutomaticVariables creates automatic variables context for a target.
+func (b *Builder) createAutomaticVariables(target string, dependencies []string) *types.AutomaticVariables {
+	autoVars := &types.AutomaticVariables{
+		Target:      target,
+		AllPrereqs:  dependencies,
+	}
+	
+	// Set first prerequisite
+	if len(dependencies) > 0 {
+		autoVars.FirstPrereq = dependencies[0]
+	}
+	
+	// Determine newer prerequisites ($?)
+	autoVars.NewerPrereqs = b.getNewerPrerequisites(target, dependencies)
+	
+	return autoVars
+}
+
+// getNewerPrerequisites returns prerequisites that are newer than the target.
+func (b *Builder) getNewerPrerequisites(target string, dependencies []string) []string {
+	targetStat, err := os.Stat(target)
+	if err != nil {
+		// If target doesn't exist, all dependencies are "newer"
+		return dependencies
+	}
+	
+	targetTime := targetStat.ModTime()
+	var newerDeps []string
+	
+	for _, dep := range dependencies {
+		depStat, err := os.Stat(dep)
+		if err != nil {
+			// If dependency doesn't exist as file, skip it
+			continue
+		}
+		if depStat.ModTime().After(targetTime) {
+			newerDeps = append(newerDeps, dep)
+		}
+	}
+	
+	return newerDeps
 }
